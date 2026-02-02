@@ -101,6 +101,18 @@ class Mandala {
 
         // Connection lines between nodes
         this.showConnections = true;
+
+        // Reactive state (set by app.js when isochronic tones play)
+        this.reactiveState = {
+            pulsePhase: 0,
+            pulseIntensity: 0,
+            breathScale: 1,
+            glowPulse: 0,
+            enabled: true
+        };
+
+        // Callback for particle emission
+        this.onTrigger = null;
     }
 
     loadPreset(presetName) {
@@ -183,8 +195,10 @@ class Mandala {
                         node.triggerFade = 1;
                         this.lastTriggerTime[noteKey] = currentTime;
 
-                        // Calculate 3D position for spatial audio
+                        // Calculate position for spatial audio and particles
                         const radius = ring.radiusRatio * this.maxRadius;
+                        const screenX = this.centerX + Math.cos(nodeAngle) * radius;
+                        const screenY = this.centerY + Math.sin(nodeAngle) * radius;
                         const x = Math.cos(nodeAngle) * ring.radiusRatio;
                         const y = Math.sin(nodeAngle) * ring.radiusRatio;
                         const z = (ringIndex - this.rings.length / 2) / this.rings.length;
@@ -192,6 +206,11 @@ class Mandala {
                         // Play sound (only if audio engine is ready)
                         if (this.audioEngine && this.audioEngine.isInitialized) {
                             this.audioEngine.playTrigger(ring.type, ringIndex, nodeIndex, { x, y, z });
+                        }
+
+                        // Emit particles
+                        if (this.onTrigger) {
+                            this.onTrigger(screenX, screenY, node.color, ring.type);
                         }
                     }
                 } else {
@@ -314,14 +333,19 @@ class Mandala {
         if (!this.maxRadius || !this.centerX || !this.centerY) return;
         if (!isFinite(this.maxRadius) || !isFinite(this.centerX) || !isFinite(this.centerY)) return;
 
-        const radius = ring.radiusRatio * this.maxRadius;
+        // Apply breathing scale from reactive state
+        const breathScale = this.reactiveState?.breathScale || 1;
+        const glowPulse = this.reactiveState?.glowPulse || 0;
+
+        const radius = ring.radiusRatio * this.maxRadius * breathScale;
         if (!isFinite(radius) || radius <= 0) return;
 
-        // Draw ring circle (subtle)
+        // Draw ring circle with reactive glow
+        const ringGlow = 0.2 + glowPulse * 0.3;
         this.ctx.beginPath();
         this.ctx.arc(this.centerX, this.centerY, radius, 0, Math.PI * 2);
-        this.ctx.strokeStyle = `rgba(80, 80, 120, 0.2)`;
-        this.ctx.lineWidth = 1;
+        this.ctx.strokeStyle = `rgba(80, 80, 120, ${ringGlow})`;
+        this.ctx.lineWidth = 1 + glowPulse * 2;
         this.ctx.stroke();
 
         // Draw nodes
@@ -333,15 +357,17 @@ class Mandala {
             // Safety check
             if (!isFinite(x) || !isFinite(y)) return;
 
-            // Node size grows when triggered
-            const size = Math.max(1, node.size + (node.triggerFade || 0) * 15);
+            // Node size grows when triggered + reactive pulse
+            const reactiveSize = 1 + glowPulse * 0.3;
+            const size = Math.max(1, (node.size + (node.triggerFade || 0) * 15) * reactiveSize);
 
-            // Draw glow if triggered
-            if (node.triggerFade > 0.1 && this.glowAmount > 0) {
+            // Draw glow if triggered OR if reactive pulse is active
+            const effectiveGlow = Math.max(node.triggerFade || 0, glowPulse * 0.5);
+            if (effectiveGlow > 0.1 && this.glowAmount > 0) {
                 const glowSize = Math.max(1, size * (2 + this.glowAmount * 3));
                 if (isFinite(glowSize) && glowSize > 0) {
                     const gradient = this.ctx.createRadialGradient(x, y, 0, x, y, glowSize);
-                    gradient.addColorStop(0, this.hexToRgba(node.color, node.triggerFade * this.glowAmount));
+                    gradient.addColorStop(0, this.hexToRgba(node.color, effectiveGlow * this.glowAmount));
                     gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
                     this.ctx.beginPath();
@@ -355,14 +381,14 @@ class Mandala {
             this.ctx.beginPath();
             this.ctx.arc(x, y, size, 0, Math.PI * 2);
 
-            // Color based on trigger state
-            const baseAlpha = 0.6 + (node.triggerFade || 0) * 0.4;
-            this.ctx.fillStyle = this.hexToRgba(node.color, baseAlpha);
+            // Color based on trigger state + reactive brightness
+            const baseAlpha = 0.6 + (node.triggerFade || 0) * 0.4 + glowPulse * 0.2;
+            this.ctx.fillStyle = this.hexToRgba(node.color, Math.min(1, baseAlpha));
             this.ctx.fill();
 
             // Draw node border
-            this.ctx.strokeStyle = this.hexToRgba(node.color, 0.8);
-            this.ctx.lineWidth = 1.5;
+            this.ctx.strokeStyle = this.hexToRgba(node.color, 0.8 + glowPulse * 0.2);
+            this.ctx.lineWidth = 1.5 + glowPulse;
             this.ctx.stroke();
         });
     }
@@ -397,13 +423,23 @@ class Mandala {
 
     drawCenterGlow() {
         if (!isFinite(this.maxRadius) || !isFinite(this.centerX) || !isFinite(this.centerY)) return;
-        const glowRadius = this.maxRadius * 0.15;
+
+        const glowPulse = this.reactiveState?.glowPulse || 0;
+        const breathScale = this.reactiveState?.breathScale || 1;
+
+        // Center glow expands and brightens with isochronic pulse
+        const glowRadius = this.maxRadius * (0.15 + glowPulse * 0.1) * breathScale;
         const gradient = this.ctx.createRadialGradient(
             this.centerX, this.centerY, 0,
             this.centerX, this.centerY, glowRadius
         );
-        gradient.addColorStop(0, 'rgba(100, 100, 200, 0.3)');
-        gradient.addColorStop(0.5, 'rgba(80, 80, 150, 0.1)');
+
+        // Brighter center when pulsing
+        const centerAlpha = 0.3 + glowPulse * 0.4;
+        const midAlpha = 0.1 + glowPulse * 0.2;
+
+        gradient.addColorStop(0, `rgba(100, 100, 200, ${centerAlpha})`);
+        gradient.addColorStop(0.5, `rgba(80, 80, 150, ${midAlpha})`);
         gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
         this.ctx.beginPath();

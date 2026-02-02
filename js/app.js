@@ -19,7 +19,17 @@ class PolyrhythmApp {
         this.controls = null;
         this.ringEditor = null;
         this.isochronicTones = null;
+        this.binauralBeats = null;
         this.isochronicPanel = null;
+        this.colorThemes = null;
+        this.colorThemesPanel = null;
+        this.particleSystem = null;
+        this.mandala3D = null;
+        this.is3DMode = false;
+        this.ambientSoundscapes = null;
+        this.ambientPanel = null;
+        this.wellnessPanel = null;
+        this.touchTriggers = null;
 
         // Visual settings (configurable via side panel)
         this.visualSettings = {
@@ -36,6 +46,15 @@ class PolyrhythmApp {
             nodeSize: 1.0,
             flashIntensity: 1.0,
             connectionOpacity: 0.5
+        };
+
+        // Reactive visualizer state (syncs with isochronic tones)
+        this.reactiveState = {
+            pulsePhase: 0,
+            pulseIntensity: 0,
+            breathScale: 1,
+            glowPulse: 0,
+            enabled: true
         };
 
         // Animation state
@@ -160,10 +179,41 @@ class PolyrhythmApp {
             // Initialize ring editor
             this.ringEditor = new RingEditor(this.audioEngine, this.mandala);
 
-            // Initialize isochronic tones
+            // Initialize isochronic tones and binaural beats
             this.isochronicTones = new IsochronicTones();
             await this.isochronicTones.init(this.audioEngine.masterGain);
-            this.isochronicPanel = new IsochronicPanel(this.isochronicTones);
+
+            this.binauralBeats = new BinauralBeats();
+            await this.binauralBeats.init(this.audioEngine.masterGain);
+
+            this.isochronicPanel = new IsochronicPanel(this.isochronicTones, this.binauralBeats);
+
+            // Initialize color themes
+            this.colorThemes = new ColorThemes();
+            this.colorThemesPanel = new ColorThemesPanel(this.colorThemes, this.mandala, this.background);
+
+            // Initialize ambient soundscapes
+            this.ambientSoundscapes = new AmbientSoundscapes();
+            await this.ambientSoundscapes.init(this.audioEngine.masterGain);
+            this.ambientPanel = new AmbientPanel(this.ambientSoundscapes);
+
+            // Initialize particle system
+            this.particleSystem = new ParticleSystem(this.canvas);
+            // Connect mandala triggers to particle emissions
+            this.mandala.onTrigger = (x, y, color, type) => {
+                this.particleSystem.emit(x, y, color, type, this.mandala.centerX, this.mandala.centerY);
+            };
+
+            // Initialize 3D mandala
+            this.mandala3D = new Mandala3D(document.getElementById('canvas-container'));
+            this.mandala3D.init(this.mandala);
+
+            // Initialize wellness tools (timer, breathing, focus mode)
+            this.wellnessPanel = new WellnessPanel(this.audioEngine);
+
+            // Initialize touch triggers for clicking on nodes
+            this.touchTriggers = new TouchTriggers(this.mandala, this.audioEngine);
+            this.create3DToggle();
 
             // Hide overlay
             overlay.classList.add('hidden');
@@ -206,6 +256,9 @@ class PolyrhythmApp {
         if (this.background) {
             this.background.resize(width, height);
         }
+        if (this.mandala3D) {
+            this.mandala3D.resize(width, height);
+        }
     }
 
     animate(currentTime) {
@@ -228,9 +281,14 @@ class PolyrhythmApp {
     }
 
     update(deltaTime) {
+        // Update reactive visualizer state (sync with isochronic tones)
+        this.updateReactiveState(deltaTime);
+
         // Update mandala rotation and triggers
         if (this.mandala) {
             this.mandala.update(deltaTime);
+            // Pass reactive state to mandala for breathing effect
+            this.mandala.reactiveState = this.reactiveState;
         }
 
         // Update background ethereal circles
@@ -240,6 +298,76 @@ class PolyrhythmApp {
                 s => performance.now() - s.startTime < 100
             );
             this.background.update(deltaTime, triggered);
+            // Pass reactive state for background pulsing
+            this.background.reactiveState = this.reactiveState;
+        }
+
+        // Update particle system
+        if (this.particleSystem) {
+            this.particleSystem.update(deltaTime);
+        }
+
+        // Update 3D mandala
+        if (this.mandala3D) {
+            this.mandala3D.reactiveState = this.reactiveState;
+            this.mandala3D.update(deltaTime);
+        }
+    }
+
+    create3DToggle() {
+        const btn = document.createElement('button');
+        btn.id = 'toggle-3d';
+        btn.textContent = '3D';
+        btn.title = 'Toggle 3D Mode';
+        btn.addEventListener('click', () => this.toggle3DMode());
+        document.getElementById('app').appendChild(btn);
+    }
+
+    toggle3DMode() {
+        this.is3DMode = this.mandala3D.toggle();
+        const btn = document.getElementById('toggle-3d');
+        btn.classList.toggle('active', this.is3DMode);
+
+        // Show/hide 2D canvas
+        this.canvas.style.display = this.is3DMode ? 'none' : 'block';
+    }
+
+    updateReactiveState(deltaTime) {
+        if (!this.reactiveState.enabled) {
+            this.reactiveState.breathScale = 1;
+            this.reactiveState.glowPulse = 0;
+            return;
+        }
+
+        // Sync with isochronic tones if playing
+        if (this.isochronicTones && this.isochronicTones.isPlaying) {
+            const pulseRate = this.isochronicTones.pulseRate;
+            const time = performance.now() / 1000;
+
+            // Calculate pulse phase (0 to 1, repeating at pulse rate)
+            this.reactiveState.pulsePhase = (time * pulseRate) % 1;
+
+            // Square wave for isochronic (sharp on/off) or sine for smooth
+            const pulseShape = this.isochronicTones.tremolo?.type || 'square';
+            if (pulseShape === 'square') {
+                // Sharp on/off pulse
+                this.reactiveState.pulseIntensity = this.reactiveState.pulsePhase < 0.5 ? 1 : 0;
+            } else {
+                // Smooth sine pulse
+                this.reactiveState.pulseIntensity = (Math.sin(this.reactiveState.pulsePhase * Math.PI * 2) + 1) / 2;
+            }
+
+            // Breathing scale effect (subtle expansion/contraction)
+            const breathAmount = 0.03; // 3% scale change
+            this.reactiveState.breathScale = 1 + (this.reactiveState.pulseIntensity * breathAmount);
+
+            // Glow pulse synchronized with the tone
+            this.reactiveState.glowPulse = this.reactiveState.pulseIntensity * 0.5;
+        } else {
+            // Gradual return to neutral when not playing
+            this.reactiveState.pulseIntensity *= 0.95;
+            this.reactiveState.breathScale = 1 + (this.reactiveState.breathScale - 1) * 0.95;
+            this.reactiveState.glowPulse *= 0.95;
         }
     }
 
@@ -261,6 +389,16 @@ class PolyrhythmApp {
         // Draw mandala
         if (this.mandala) {
             this.mandala.draw();
+        }
+
+        // Draw particles (on top of everything) - only in 2D mode
+        if (this.particleSystem && !this.is3DMode) {
+            this.particleSystem.draw();
+        }
+
+        // Render 3D scene if active
+        if (this.mandala3D && this.is3DMode) {
+            this.mandala3D.render();
         }
     }
 
@@ -398,6 +536,12 @@ class PolyrhythmApp {
         }
         if (this.isochronicTones) {
             this.isochronicTones.dispose();
+        }
+        if (this.binauralBeats) {
+            this.binauralBeats.dispose();
+        }
+        if (this.ambientSoundscapes) {
+            this.ambientSoundscapes.dispose();
         }
         window.removeEventListener('resize', this.onResize);
     }

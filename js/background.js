@@ -18,6 +18,9 @@ class Background {
         this.lineWidthMultiplier = 1.0;
         this.pulseMultiplier = 0.5;
 
+        // Reactive state (set by app.js when isochronic tones play)
+        this.reactiveState = null;
+
         // Create initial circles
         this.initCircles();
     }
@@ -142,26 +145,32 @@ class Background {
         // Safety checks
         if (!isFinite(x) || !isFinite(y) || !isFinite(radius) || radius <= 0) return;
 
-        // Apply multipliers
-        const effectiveAlpha = circle.alpha * this.opacityMultiplier;
-        const effectiveLineWidth = lineWidth * this.lineWidthMultiplier;
+        // Get reactive state values
+        const glowPulse = this.reactiveState?.glowPulse || 0;
+        const breathScale = this.reactiveState?.breathScale || 1;
+
+        // Apply multipliers + reactive enhancements
+        const effectiveAlpha = circle.alpha * this.opacityMultiplier * (1 + glowPulse * 0.5);
+        const effectiveLineWidth = lineWidth * this.lineWidthMultiplier * (1 + glowPulse * 0.3);
+        const effectiveRadius = radius * breathScale;
 
         if (effectiveAlpha <= 0) return;
 
         // Draw the ring as a stroke (not filled)
         this.ctx.beginPath();
-        this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+        this.ctx.arc(x, y, effectiveRadius, 0, Math.PI * 2);
 
-        // Set stroke style with HSL color and current alpha
-        this.ctx.strokeStyle = `hsla(${color.h}, ${color.s}%, ${color.l}%, ${effectiveAlpha})`;
+        // Set stroke style with HSL color and current alpha (brighter during pulse)
+        const effectiveLightness = color.l + glowPulse * 15;
+        this.ctx.strokeStyle = `hsla(${color.h}, ${color.s}%, ${effectiveLightness}%, ${effectiveAlpha})`;
         this.ctx.lineWidth = effectiveLineWidth;
         this.ctx.stroke();
 
         // Optional: draw a second, slightly larger/smaller ring for depth
         if (effectiveAlpha > 0.05) {
             this.ctx.beginPath();
-            this.ctx.arc(x, y, radius * 1.05, 0, Math.PI * 2);
-            this.ctx.strokeStyle = `hsla(${color.h}, ${color.s}%, ${color.l + 10}%, ${effectiveAlpha * 0.4})`;
+            this.ctx.arc(x, y, effectiveRadius * 1.05, 0, Math.PI * 2);
+            this.ctx.strokeStyle = `hsla(${color.h}, ${color.s}%, ${effectiveLightness + 10}%, ${effectiveAlpha * 0.4})`;
             this.ctx.lineWidth = effectiveLineWidth * 0.6;
             this.ctx.stroke();
         }

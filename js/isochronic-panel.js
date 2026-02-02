@@ -3,9 +3,11 @@
  */
 
 class IsochronicPanel {
-    constructor(isochronicTones) {
+    constructor(isochronicTones, binauralBeats = null) {
         this.iso = isochronicTones;
+        this.binaural = binauralBeats;
         this.isOpen = false;
+        this.mode = 'isochronic'; // 'isochronic' or 'binaural'
 
         this.createPanel();
         this.bindEvents();
@@ -21,8 +23,17 @@ class IsochronicPanel {
         this.panel.innerHTML = `
             <div class="iso-content">
                 <div class="iso-header">
-                    <h3>Isochronic Tones</h3>
-                    <p class="iso-subtitle">Brainwave Entrainment</p>
+                    <h3>Brainwave Entrainment</h3>
+                    <p class="iso-subtitle">Isochronic & Binaural Beats</p>
+                </div>
+
+                <div class="iso-section">
+                    <h4>Mode</h4>
+                    <div class="iso-buttons mode-buttons">
+                        <button class="iso-mode-btn active" data-mode="isochronic">Isochronic</button>
+                        <button class="iso-mode-btn" data-mode="binaural">Binaural</button>
+                    </div>
+                    <p class="mode-info" id="mode-info">Pulsing tones - works with speakers or headphones</p>
                 </div>
 
                 <div class="iso-brainwave-display">
@@ -188,27 +199,40 @@ class IsochronicPanel {
 
         // Preset selection
         this.elements.preset.addEventListener('change', (e) => {
-            this.iso.loadPreset(e.target.value);
+            const source = this.getActiveSource();
+            source.loadPreset(e.target.value);
             this.updateDisplay();
         });
 
         // Pulse rate
         this.elements.pulseRate.addEventListener('input', (e) => {
-            this.iso.setPulseRate(parseFloat(e.target.value));
+            const source = this.getActiveSource();
+            const value = parseFloat(e.target.value);
+            if (this.mode === 'binaural' && this.binaural) {
+                this.binaural.setBeatFrequency(value);
+            } else {
+                this.iso.setPulseRate(value);
+            }
             this.elements.preset.value = 'Custom';
             this.updateDisplay();
         });
 
         // Carrier frequency
         this.elements.carrier.addEventListener('input', (e) => {
-            this.iso.setCarrierFrequency(parseFloat(e.target.value));
+            const value = parseFloat(e.target.value);
+            if (this.mode === 'binaural' && this.binaural) {
+                this.binaural.setBaseFrequency(value);
+            } else {
+                this.iso.setCarrierFrequency(value);
+            }
             this.elements.preset.value = 'Custom';
             this.updateDisplay();
         });
 
         // Volume
         this.elements.volume.addEventListener('input', (e) => {
-            this.iso.setVolume(e.target.value / 100);
+            const source = this.getActiveSource();
+            source.setVolume(e.target.value / 100);
             this.elements.volumeValue.textContent = e.target.value + '%';
         });
 
@@ -230,14 +254,22 @@ class IsochronicPanel {
             });
         });
 
+        // Mode toggle buttons
+        document.querySelectorAll('.iso-mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.setMode(btn.dataset.mode);
+            });
+        });
+
         // Play/Stop button
         this.elements.playBtn.addEventListener('click', () => {
-            if (this.iso.isPlaying) {
-                this.iso.stop();
+            const source = this.getActiveSource();
+            if (source.isPlaying) {
+                source.stop();
                 this.elements.playBtn.textContent = '▶ Start';
                 this.elements.playBtn.classList.remove('playing');
             } else {
-                this.iso.start();
+                source.start();
                 this.elements.playBtn.textContent = '⏹ Stop';
                 this.elements.playBtn.classList.add('playing');
             }
@@ -254,23 +286,28 @@ class IsochronicPanel {
     }
 
     updateDisplay() {
-        // Update slider values
-        this.elements.pulseRate.value = this.iso.pulseRate;
-        this.elements.pulseRateValue.textContent = this.iso.pulseRate.toFixed(1) + ' Hz';
+        const source = this.mode === 'binaural' && this.binaural ? this.binaural : this.iso;
+        const pulseRate = this.mode === 'binaural' ? source.beatFrequency : source.pulseRate;
+        const carrierFreq = this.mode === 'binaural' ? source.baseFrequency : source.carrierFrequency;
 
-        this.elements.carrier.value = this.iso.carrierFrequency;
-        this.elements.carrierValue.textContent = this.iso.carrierFrequency + ' Hz';
+        // Update slider values
+        this.elements.pulseRate.value = pulseRate;
+        this.elements.pulseRateValue.textContent = pulseRate.toFixed(1) + ' Hz';
+
+        this.elements.carrier.value = carrierFreq;
+        this.elements.carrierValue.textContent = carrierFreq + ' Hz';
 
         // Update brainwave indicator
-        const brainwave = this.iso.getCurrentBrainwave();
+        const brainwave = source.getCurrentBrainwave();
         const indicator = this.elements.brainwaveIndicator;
         indicator.querySelector('.brainwave-label').textContent = brainwave.label;
-        indicator.querySelector('.brainwave-freq').textContent = this.iso.pulseRate.toFixed(1) + ' Hz';
+        indicator.querySelector('.brainwave-freq').textContent = pulseRate.toFixed(1) + ' Hz';
         indicator.style.borderColor = brainwave.color;
         indicator.style.color = brainwave.color;
 
         // Update preset description
-        const preset = IsochronicTones.getPresetInfo(this.iso.currentPreset);
+        const PresetClass = this.mode === 'binaural' ? BinauralBeats : IsochronicTones;
+        const preset = PresetClass.getPresetInfo(source.currentPreset);
         if (preset) {
             this.elements.presetDescription.textContent = preset.description;
         }
@@ -283,6 +320,37 @@ class IsochronicPanel {
         if (activeBand) {
             activeBand.classList.add('active');
         }
+    }
+
+    setMode(mode) {
+        // Stop current playback when switching
+        if (this.iso.isPlaying) this.iso.stop();
+        if (this.binaural?.isPlaying) this.binaural.stop();
+
+        this.mode = mode;
+
+        // Update mode buttons
+        document.querySelectorAll('.iso-mode-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.mode === mode);
+        });
+
+        // Update mode info text
+        const modeInfo = document.getElementById('mode-info');
+        if (mode === 'binaural') {
+            modeInfo.textContent = 'Stereo beats - requires headphones for effect';
+        } else {
+            modeInfo.textContent = 'Pulsing tones - works with speakers or headphones';
+        }
+
+        // Reset play button
+        this.elements.playBtn.textContent = '▶ Start';
+        this.elements.playBtn.classList.remove('playing');
+
+        this.updateDisplay();
+    }
+
+    getActiveSource() {
+        return this.mode === 'binaural' && this.binaural ? this.binaural : this.iso;
     }
 }
 
