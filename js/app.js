@@ -18,6 +18,8 @@ class PolyrhythmApp {
         this.background = null;
         this.controls = null;
         this.ringEditor = null;
+        this.isochronicTones = null;
+        this.isochronicPanel = null;
 
         // Visual settings (configurable via side panel)
         this.visualSettings = {
@@ -157,6 +159,11 @@ class PolyrhythmApp {
 
             // Initialize ring editor
             this.ringEditor = new RingEditor(this.audioEngine, this.mandala);
+
+            // Initialize isochronic tones
+            this.isochronicTones = new IsochronicTones();
+            await this.isochronicTones.init(this.audioEngine.masterGain);
+            this.isochronicPanel = new IsochronicPanel(this.isochronicTones);
 
             // Hide overlay
             overlay.classList.add('hidden');
@@ -388,6 +395,9 @@ class PolyrhythmApp {
         this.stop();
         if (this.audioEngine) {
             this.audioEngine.dispose();
+        }
+        if (this.isochronicTones) {
+            this.isochronicTones.dispose();
         }
         window.removeEventListener('resize', this.onResize);
     }

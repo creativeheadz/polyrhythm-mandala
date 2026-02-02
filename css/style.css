@@ -769,3 +769,320 @@ body {
     display: flex;
     gap: 6px;
 }
+
+/* ===== Isochronic Tones Panel ===== */
+#iso-panel {
+    position: fixed;
+    right: 0;
+    top: 70px;
+    bottom: 0;
+    width: 260px;
+    background: rgba(15, 15, 25, 0.98);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 200;
+    transition: right 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#iso-panel.collapsed {
+    right: -260px;
+}
+
+#iso-toggle {
+    position: fixed;
+    right: 0;
+    top: 130px;
+    width: 36px;
+    height: 36px;
+    background: rgba(30, 30, 45, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-right: none;
+    border-radius: 6px 0 0 6px;
+    color: #888;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s, background 0.2s, right 0.3s ease;
+    z-index: 201;
+}
+
+#iso-toggle.open {
+    right: 260px;
+}
+
+#iso-toggle:hover {
+    color: #fff;
+    background: rgba(40, 40, 60, 0.95);
+}
+
+.iso-content {
+    padding: 12px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.iso-header {
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.iso-header h3 {
+    font-size: 13px;
+    font-weight: 500;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.iso-subtitle {
+    font-size: 10px;
+    color: #666;
+}
+
+/* Brainwave Display */
+.iso-brainwave-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+}
+
+.brainwave-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 16px;
+    border: 2px solid #22c55e;
+    border-radius: 8px;
+    color: #22c55e;
+    transition: all 0.3s;
+}
+
+.brainwave-label {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.brainwave-freq {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+#iso-visualizer {
+    border-radius: 4px;
+}
+
+/* Isochronic Sections */
+.iso-section {
+    margin-bottom: 12px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+}
+
+.iso-section h4 {
+    font-size: 10px;
+    font-weight: 500;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.iso-select {
+    width: 100%;
+    padding: 6px 8px;
+    background: rgba(30, 30, 45, 0.9);
+    border: 1px solid #444;
+    color: #fff;
+    font-size: 11px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.iso-select:hover {
+    border-color: #666;
+}
+
+.iso-select:focus {
+    outline: none;
+    border-color: #4a9eff;
+}
+
+.preset-description {
+    font-size: 10px;
+    color: #666;
+    margin-top: 6px;
+    font-style: italic;
+}
+
+/* Slider Row */
+.iso-slider-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.iso-slider-row input[type="range"] {
+    flex: 1;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    -webkit-appearance: none;
+}
+
+.iso-slider-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: #4a9eff;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.iso-slider-row input[type="range"]::-webkit-slider-thumb:hover {
+    background: #6bb3ff;
+}
+
+.iso-value {
+    font-size: 11px;
+    color: #4a9eff;
+    min-width: 50px;
+    text-align: right;
+}
+
+/* Brainwave Bands */
+.brainwave-bands {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.brainwave-bands .band {
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    opacity: 0.4;
+    transition: opacity 0.3s, transform 0.2s;
+}
+
+.brainwave-bands .band.active {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.brainwave-bands .band.delta {
+    color: #8b5cf6;
+    background: rgba(139, 92, 246, 0.2);
+}
+
+.brainwave-bands .band.theta {
+    color: #06b6d4;
+    background: rgba(6, 182, 212, 0.2);
+}
+
+.brainwave-bands .band.alpha {
+    color: #22c55e;
+    background: rgba(34, 197, 94, 0.2);
+}
+
+.brainwave-bands .band.beta {
+    color: #eab308;
+    background: rgba(234, 179, 8, 0.2);
+}
+
+.brainwave-bands .band.gamma {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.2);
+}
+
+/* Isochronic Buttons */
+.iso-buttons {
+    display: flex;
+    gap: 6px;
+}
+
+.iso-shape-btn, .iso-pulse-btn {
+    flex: 1;
+    height: 28px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background: transparent;
+    color: #888;
+    cursor: pointer;
+    font-size: 10px;
+    transition: all 0.2s;
+}
+
+.iso-shape-btn:hover, .iso-pulse-btn:hover {
+    border-color: #666;
+    color: #fff;
+}
+
+.iso-shape-btn.active, .iso-pulse-btn.active {
+    border-color: #4a9eff;
+    background: rgba(74, 158, 255, 0.2);
+    color: #4a9eff;
+}
+
+/* Isochronic Controls */
+.iso-controls {
+    display: flex;
+    justify-content: center;
+    margin-top: 16px;
+}
+
+.iso-play-btn {
+    width: 100%;
+    height: 40px;
+    border-radius: 6px;
+    border: 2px solid #22c55e;
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.iso-play-btn:hover {
+    background: rgba(34, 197, 94, 0.2);
+}
+
+.iso-play-btn.playing {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.iso-play-btn.playing:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+/* Isochronic Info */
+.iso-info {
+    margin-top: 16px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+}
+
+.iso-info p {
+    font-size: 10px;
+    color: #666;
+    line-height: 1.5;
+}
+
+.iso-info strong {
+    color: #888;
+}
