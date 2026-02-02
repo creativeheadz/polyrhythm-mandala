@@ -1,0 +1,364 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #0a0a12;
+    color: #ffffff;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+}
+
+/* Control Bar */
+#control-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: rgba(20, 20, 30, 0.9);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    height: 70px;
+    z-index: 100;
+}
+
+.control-section {
+    display: flex;
+    gap: 16px;
+}
+
+.section-label {
+    font-size: 11px;
+    color: #888;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.section-label:hover {
+    color: #fff;
+}
+
+#preset-selector {
+    padding: 6px 12px;
+    background: rgba(30, 30, 45, 0.9);
+    border: 1px solid #444;
+    color: #fff;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    min-width: 150px;
+}
+
+#preset-selector:hover {
+    border-color: #666;
+}
+
+#preset-selector:focus {
+    outline: none;
+    border-color: #4a9eff;
+}
+
+#preset-selector option {
+    background: #1a1a2e;
+    color: #fff;
+}
+
+.title-section h1 {
+    font-size: 14px;
+    font-weight: 400;
+    color: #aaa;
+    white-space: nowrap;
+}
+
+/* Dial Controls */
+.dial-section {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.dial-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.dial {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #1a1a2e, #0f0f1a);
+    border: 2px solid #333;
+    position: relative;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.dial:hover {
+    border-color: #666;
+}
+
+.dial-knob {
+    position: absolute;
+    width: 4px;
+    height: 12px;
+    background: #fff;
+    border-radius: 2px;
+    top: 4px;
+    left: 50%;
+    transform-origin: bottom center;
+    transform: translateX(-50%);
+}
+
+.dial-value {
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 9px;
+    color: #888;
+}
+
+.dial-label {
+    font-size: 9px;
+    color: #666;
+}
+
+/* Info Section */
+.info-section {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+#glow-color-btn {
+    padding: 4px 12px;
+    background: transparent;
+    border: 1px solid #444;
+    color: #888;
+    font-size: 11px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+#glow-color-btn:hover {
+    border-color: #666;
+    color: #fff;
+}
+
+.playback-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.playback-controls button {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid #444;
+    background: transparent;
+    color: #888;
+    cursor: pointer;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.playback-controls button:hover {
+    border-color: #666;
+    color: #fff;
+}
+
+.playback-controls button.active {
+    border-color: #4a9eff;
+    color: #4a9eff;
+}
+
+#time-display {
+    font-size: 11px;
+    color: #666;
+    font-family: monospace;
+}
+
+/* Canvas Container */
+#canvas-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+#main-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Start Overlay */
+#start-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 10, 18, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    cursor: pointer;
+    transition: opacity 0.5s;
+}
+
+#start-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.start-content {
+    text-align: center;
+}
+
+.start-content h2 {
+    font-size: 32px;
+    font-weight: 300;
+    margin-bottom: 16px;
+    color: #fff;
+}
+
+.start-content p {
+    font-size: 14px;
+    color: #666;
+}
+
+/* Glow effect for triggered notes */
+.glow {
+    filter: drop-shadow(0 0 10px currentColor);
+}
+
+/* Side Panel */
+#side-panel {
+    position: fixed;
+    right: 0;
+    top: 70px;
+    bottom: 0;
+    width: 280px;
+    background: rgba(15, 15, 25, 0.95);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 200;
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+#side-panel.collapsed {
+    transform: translateX(280px);
+}
+
+#panel-toggle {
+    position: absolute;
+    left: -36px;
+    top: 10px;
+    width: 36px;
+    height: 36px;
+    background: rgba(30, 30, 45, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-right: none;
+    border-radius: 6px 0 0 6px;
+    color: #888;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s, background 0.2s;
+}
+
+#panel-toggle:hover {
+    color: #fff;
+    background: rgba(40, 40, 60, 0.95);
+}
+
+.panel-content {
+    padding: 16px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.panel-content h3 {
+    font-size: 14px;
+    font-weight: 500;
+    color: #fff;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.panel-section {
+    margin-bottom: 20px;
+}
+
+.panel-section h4 {
+    font-size: 11px;
+    font-weight: 500;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+.slider-group {
+    margin-bottom: 12px;
+}
+
+.slider-group label {
+    display: block;
+    font-size: 11px;
+    color: #aaa;
+    margin-bottom: 4px;
+}
+
+.slider-group input[type="range"] {
+    width: calc(100% - 45px);
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    outline: none;
+    -webkit-appearance: none;
+    vertical-align: middle;
+}
+
+.slider-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: #4a9eff;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.slider-group input[type="range"]::-webkit-slider-thumb:hover {
+    background: #6bb3ff;
+}
+
+.slider-group .slider-value {
+    display: inline-block;
+    width: 40px;
+    text-align: right;
+    font-size: 10px;
+    color: #666;
+    vertical-align: middle;
+}
