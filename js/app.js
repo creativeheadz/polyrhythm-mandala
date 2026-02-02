@@ -30,6 +30,9 @@ class PolyrhythmApp {
         this.ambientPanel = null;
         this.wellnessPanel = null;
         this.touchTriggers = null;
+        this.orbitersSystem = null;
+        this.mandalaShapes = null;
+        this.shapePanel = null;
 
         // Visual settings (configurable via side panel)
         this.visualSettings = {
@@ -213,6 +216,12 @@ class PolyrhythmApp {
 
             // Initialize touch triggers for clicking on nodes
             this.touchTriggers = new TouchTriggers(this.mandala, this.audioEngine);
+
+            // Initialize orbiters system (free-roaming nodes)
+            this.orbitersSystem = new OrbitersSystem(this.mandala, this.audioEngine);
+            this.mandalaShapes = new MandalaShapes(this.mandala);
+            this.shapePanel = new ShapePanel(this.mandala, this.audioEngine, this.orbitersSystem);
+
             this.create3DToggle();
 
             // Hide overlay
@@ -307,6 +316,11 @@ class PolyrhythmApp {
             this.particleSystem.update(deltaTime);
         }
 
+        // Update orbiters (free-roaming nodes)
+        if (this.orbitersSystem) {
+            this.orbitersSystem.update(deltaTime);
+        }
+
         // Update 3D mandala
         if (this.mandala3D) {
             this.mandala3D.reactiveState = this.reactiveState;
@@ -389,6 +403,16 @@ class PolyrhythmApp {
         // Draw mandala
         if (this.mandala) {
             this.mandala.draw();
+        }
+
+        // Draw orbiters (free-roaming nodes that move along trajectories)
+        if (this.orbitersSystem && !this.is3DMode && this.mandala) {
+            this.orbitersSystem.draw(
+                this.ctx,
+                this.mandala.centerX,
+                this.mandala.centerY,
+                this.mandala.maxRadius
+            );
         }
 
         // Draw particles (on top of everything) - only in 2D mode
@@ -542,6 +566,9 @@ class PolyrhythmApp {
         }
         if (this.ambientSoundscapes) {
             this.ambientSoundscapes.dispose();
+        }
+        if (this.orbitersSystem) {
+            this.orbitersSystem.dispose();
         }
         window.removeEventListener('resize', this.onResize);
     }
