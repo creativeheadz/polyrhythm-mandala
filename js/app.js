@@ -17,6 +17,7 @@ class PolyrhythmApp {
         this.mandala = null;
         this.background = null;
         this.controls = null;
+        this.ringEditor = null;
 
         // Visual settings (configurable via side panel)
         this.visualSettings = {
@@ -146,8 +147,16 @@ class PolyrhythmApp {
             await this.audioEngine.init();
             console.log('Audio engine started');
 
+            // Initialize per-ring synths based on current mandala
+            if (this.mandala && this.mandala.rings) {
+                this.audioEngine.initializeForMandala(this.mandala.rings);
+            }
+
             // Initialize controls (needs audio engine)
             this.controls = new Controls(this.audioEngine, this.mandala);
+
+            // Initialize ring editor
+            this.ringEditor = new RingEditor(this.audioEngine, this.mandala);
 
             // Hide overlay
             overlay.classList.add('hidden');

@@ -35,6 +35,15 @@ class Controls {
             const presetName = e.target.value;
             if (this.mandala) {
                 this.mandala.loadPreset(presetName);
+                // Reinitialize synths for the new mandala configuration
+                if (this.audioEngine && this.audioEngine.isInitialized && this.mandala.rings) {
+                    this.audioEngine.initializeForMandala(this.mandala.rings);
+                    // Refresh ring editor if it exists
+                    if (window.polyrhythmApp && window.polyrhythmApp.ringEditor) {
+                        window.polyrhythmApp.ringEditor.selectedRing = 0;
+                        window.polyrhythmApp.ringEditor.refresh();
+                    }
+                }
             }
         });
     }

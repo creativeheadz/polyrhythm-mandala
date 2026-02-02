@@ -362,3 +362,410 @@ body {
     color: #666;
     vertical-align: middle;
 }
+
+/* ===== Ring Editor Panel ===== */
+#ring-editor {
+    position: fixed;
+    left: 0;
+    top: 70px;
+    bottom: 0;
+    width: 260px;
+    background: rgba(15, 15, 25, 0.98);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 200;
+    transition: left 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#ring-editor.collapsed {
+    left: -260px;
+}
+
+#ring-editor-toggle {
+    position: fixed;
+    left: 0;
+    top: 80px;
+    width: 36px;
+    height: 36px;
+    background: rgba(30, 30, 45, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-left: none;
+    border-radius: 0 6px 6px 0;
+    color: #888;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s, background 0.2s, left 0.3s ease;
+    z-index: 201;
+}
+
+#ring-editor-toggle.open {
+    left: 260px;
+}
+
+#ring-editor-toggle:hover {
+    color: #fff;
+    background: rgba(40, 40, 60, 0.95);
+}
+
+.editor-content {
+    padding: 12px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.editor-header {
+    margin-bottom: 12px;
+}
+
+.editor-header h3 {
+    font-size: 13px;
+    font-weight: 500;
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+.ring-selector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.ring-nav {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background: transparent;
+    color: #888;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.ring-nav:hover {
+    border-color: #666;
+    color: #fff;
+}
+
+#ring-indicator {
+    font-size: 12px;
+    color: #4a9eff;
+    min-width: 80px;
+    text-align: center;
+}
+
+.ring-preview {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+#ring-preview-canvas {
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.editor-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.editor-section {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    padding: 10px;
+}
+
+.editor-section h4 {
+    font-size: 10px;
+    font-weight: 500;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.editor-select {
+    width: 100%;
+    padding: 6px 8px;
+    background: rgba(30, 30, 45, 0.9);
+    border: 1px solid #444;
+    color: #fff;
+    font-size: 11px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.editor-select:hover {
+    border-color: #666;
+}
+
+.editor-select:focus {
+    outline: none;
+    border-color: #4a9eff;
+}
+
+/* Waveform Buttons */
+.waveform-buttons {
+    display: flex;
+    gap: 6px;
+}
+
+.waveform-btn {
+    flex: 1;
+    height: 32px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background: transparent;
+    color: #888;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.waveform-btn:hover {
+    border-color: #666;
+    color: #fff;
+}
+
+.waveform-btn.active {
+    border-color: #4a9eff;
+    background: rgba(74, 158, 255, 0.2);
+    color: #4a9eff;
+}
+
+/* Octave Control */
+.octave-control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.octave-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background: transparent;
+    color: #888;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.octave-btn:hover {
+    border-color: #666;
+    color: #fff;
+}
+
+#octave-value {
+    font-size: 18px;
+    color: #4a9eff;
+    min-width: 24px;
+    text-align: center;
+}
+
+/* Duration Buttons */
+.duration-buttons {
+    display: flex;
+    gap: 4px;
+}
+
+.duration-btn {
+    flex: 1;
+    height: 28px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background: transparent;
+    color: #888;
+    cursor: pointer;
+    font-size: 10px;
+    transition: all 0.2s;
+}
+
+.duration-btn:hover {
+    border-color: #666;
+    color: #fff;
+}
+
+.duration-btn.active {
+    border-color: #4a9eff;
+    background: rgba(74, 158, 255, 0.2);
+    color: #4a9eff;
+}
+
+/* Envelope Sliders */
+.envelope-sliders {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.mini-slider {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.mini-slider label {
+    font-size: 9px;
+    color: #666;
+}
+
+.mini-slider input[type="range"] {
+    width: 100%;
+    height: 60px;
+    -webkit-appearance: slider-vertical;
+    writing-mode: bt-lr;
+    background: transparent;
+}
+
+.mini-slider input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    background: #4a9eff;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.mini-slider input[type="range"]::-webkit-slider-runnable-track {
+    width: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+#envelope-canvas {
+    width: 100%;
+    border-radius: 4px;
+}
+
+/* Mix Sliders */
+.mix-sliders {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.slider-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.slider-row label {
+    font-size: 10px;
+    color: #888;
+    width: 40px;
+}
+
+.slider-row input[type="range"] {
+    flex: 1;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    -webkit-appearance: none;
+}
+
+.slider-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    background: #4a9eff;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.slider-val {
+    font-size: 10px;
+    color: #666;
+    width: 35px;
+    text-align: right;
+}
+
+/* Mute/Solo/Test */
+.mute-solo {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.mute-btn, .solo-btn, .test-btn {
+    width: 40px;
+    height: 28px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background: transparent;
+    color: #888;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.mute-btn:hover, .solo-btn:hover, .test-btn:hover {
+    border-color: #666;
+    color: #fff;
+}
+
+.mute-btn.active {
+    border-color: #ff5555;
+    background: rgba(255, 85, 85, 0.2);
+    color: #ff5555;
+}
+
+.solo-btn.active {
+    border-color: #50fa7b;
+    background: rgba(80, 250, 123, 0.2);
+    color: #50fa7b;
+}
+
+.test-btn {
+    width: 60px;
+}
+
+.test-btn:hover {
+    border-color: #4a9eff;
+    color: #4a9eff;
+}
+
+/* Action Buttons */
+.editor-section.actions {
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn {
+    flex: 1;
+    height: 32px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background: transparent;
+    color: #888;
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.2s;
+}
+
+.action-btn:hover {
+    border-color: #4a9eff;
+    color: #4a9eff;
+}
+
+.action-btn.small {
+    height: 28px;
+    font-size: 10px;
+}
+
+.preset-actions {
+    display: flex;
+    gap: 6px;
+}
