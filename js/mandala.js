@@ -113,6 +113,10 @@ class Mandala {
 
         // Callback for particle emission
         this.onTrigger = null;
+
+        // Custom nodes support (for alternative shapes)
+        this.customNodes = null;
+        this.useCustomNodes = false;
     }
 
     loadPreset(presetName) {
@@ -247,10 +251,14 @@ class Mandala {
             this.drawConnections();
         }
 
-        // Draw rings and nodes
-        this.rings.forEach((ring, ringIndex) => {
-            this.drawRing(ring, ringIndex);
-        });
+        // Draw rings and nodes (or custom nodes if active)
+        if (this.useCustomNodes && this.customNodes) {
+            this.drawCustomNodes();
+        } else {
+            this.rings.forEach((ring, ringIndex) => {
+                this.drawRing(ring, ringIndex);
+            });
+        }
 
         // Draw trigger line
         this.drawTriggerLine();
@@ -446,6 +454,89 @@ class Mandala {
         this.ctx.arc(this.centerX, this.centerY, glowRadius, 0, Math.PI * 2);
         this.ctx.fillStyle = gradient;
         this.ctx.fill();
+    }
+
+    drawCustomNodes() {
+        const breathScale = this.reactiveState?.breathScale || 1;
+        const glowPulse = this.reactiveState?.glowPulse || 0;
+        const currentTime = performance.now();
+
+        this.customNodes.forEach((node, index) => {
+            // Convert normalized coordinates (-1 to 1) to screen coordinates
+            const x = this.centerX + node.x * this.maxRadius * breathScale;
+            const y = this.centerY + node.y * this.maxRadius * breathScale;
+
+            if (!isFinite(x) || !isFinite(y)) return;
+
+            // Initialize trigger state if needed
+            if (node.triggerFade === undefined) {
+                node.triggerFade = 0;
+                node.lastTriggerTime = 0;
+            }
+
+            // Check trigger zone (top of mandala)
+            const angle = Math.atan2(node.y, node.x);
+            const angleDiff = Math.abs(this.normalizeAngle(angle - this.triggerAngle));
+            const isInTriggerZone = angleDiff < this.triggerWidth * 2 || angleDiff > (Math.PI * 2 - this.triggerWidth * 2);
+
+            const cooldown = 800;
+            if (isInTriggerZone && currentTime - node.lastTriggerTime > cooldown) {
+                if (!node.triggered) {
+                    node.triggered = true;
+                    node.triggerFade = 1;
+                    node.lastTriggerTime = currentTime;
+
+                    // Play sound
+                    if (this.audioEngine && this.audioEngine.isInitialized) {
+                        this.audioEngine.playTrigger(node.type, node.ring, index % 8, { x: node.x, y: node.y, z: 0 });
+                    }
+
+                    // Emit particles
+                    if (this.onTrigger) {
+                        this.onTrigger(x, y, node.color, node.type);
+                    }
+                }
+            } else {
+                node.triggered = false;
+            }
+
+            // Fade trigger effect
+            if (node.triggerFade > 0) {
+                node.triggerFade -= 0.016 * 2; // Roughly 60fps
+                if (node.triggerFade < 0) node.triggerFade = 0;
+            }
+
+            // Node size
+            const baseSize = 6 + (node.ring || 0) * 0.5;
+            const reactiveSize = 1 + glowPulse * 0.3;
+            const size = Math.max(1, (baseSize + node.triggerFade * 15) * reactiveSize);
+
+            // Draw glow
+            const effectiveGlow = Math.max(node.triggerFade, glowPulse * 0.5);
+            if (effectiveGlow > 0.1 && this.glowAmount > 0) {
+                const glowSize = Math.max(1, size * (2 + this.glowAmount * 3));
+                if (isFinite(glowSize) && glowSize > 0) {
+                    const gradient = this.ctx.createRadialGradient(x, y, 0, x, y, glowSize);
+                    gradient.addColorStop(0, this.hexToRgba(node.color, effectiveGlow * this.glowAmount));
+                    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, glowSize, 0, Math.PI * 2);
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.fill();
+                }
+            }
+
+            // Draw node
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, size, 0, Math.PI * 2);
+            const baseAlpha = 0.6 + node.triggerFade * 0.4 + glowPulse * 0.2;
+            this.ctx.fillStyle = this.hexToRgba(node.color, Math.min(1, baseAlpha));
+            this.ctx.fill();
+            this.ctx.strokeStyle = this.hexToRgba(node.color, 0.8 + glowPulse * 0.2);
+            this.ctx.lineWidth = 1.5 + glowPulse;
+            this.ctx.stroke();
+        });
     }
 
     hexToRgba(hex, alpha) {

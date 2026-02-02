@@ -30,12 +30,26 @@ class ShapePanel {
         this.panel.className = 'collapsed';
 
         const patterns = OrbitersSystem.getPatternNames();
+        const shapeNames = MandalaShapes.getShapeNames();
 
         this.panel.innerHTML = `
             <div class="shape-content">
                 <div class="shape-header">
                     <h3>Shapes & Orbiters</h3>
                     <span class="shape-subtitle">Geometric patterns & trajectories</span>
+                </div>
+
+                <div class="shape-section">
+                    <h4>Mandala Shape</h4>
+                    <div class="shape-grid">
+                        ${shapeNames.map(name => {
+                            const info = MandalaShapes.getShapeInfo(name);
+                            return `<button class="mandala-shape-btn${name === 'circular' ? ' active' : ''}" data-shape="${name}" title="${info.description}">
+                                <span class="shape-icon">${info.icon}</span>
+                                <span class="shape-name">${info.name}</span>
+                            </button>`;
+                        }).join('')}
+                    </div>
                 </div>
 
                 <div class="shape-section">
@@ -125,6 +139,17 @@ class ShapePanel {
     bindEvents() {
         // Toggle panel
         this.toggleBtn.addEventListener('click', () => this.togglePanel());
+
+        // Mandala shape buttons
+        this.panel.querySelectorAll('.mandala-shape-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const shapeName = btn.dataset.shape;
+                this.applyMandalaShape(shapeName);
+                // Update active state
+                this.panel.querySelectorAll('.mandala-shape-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
 
         // Add orbiters
         this.panel.querySelector('#add-orbiter').addEventListener('click', () => {
@@ -289,6 +314,36 @@ class ShapePanel {
                 value.textContent = input.id === 'orbiter-trail' ? input.value : input.value + '%';
             }
         });
+    }
+
+    /**
+     * Apply a mandala shape - generates alternative node positions
+     */
+    applyMandalaShape(shapeName) {
+        if (!this.mandala) return;
+
+        if (shapeName === 'circular') {
+            // Reset to default circular mandala
+            this.mandala.customNodes = null;
+            this.mandala.useCustomNodes = false;
+            console.log('Reset to circular mandala');
+            return;
+        }
+
+        // Generate custom node positions
+        const nodes = this.shapes.generateShape(
+            shapeName,
+            this.mandala.centerX,
+            this.mandala.centerY,
+            this.mandala.maxRadius,
+            this.mandala.rings.length
+        );
+
+        if (nodes && nodes.length > 0) {
+            this.mandala.customNodes = nodes;
+            this.mandala.useCustomNodes = true;
+            console.log(`Applied ${shapeName} shape with ${nodes.length} nodes`);
+        }
     }
 }
 
